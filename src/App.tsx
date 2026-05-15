@@ -1,5 +1,6 @@
 import React, { useState, useEffect, cloneElement } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, Cell, LineChart, Line
@@ -50,11 +51,20 @@ export default function App() {
     }, 3000);
   };
 
-  if (authState === 'login') return <LoginView onLogin={() => setAuthState('authenticated')} onNavigateRegister={() => setAuthState('register')} />;
-  if (authState === 'register') return <RegisterView onRegister={() => setAuthState('authenticated')} onNavigateLogin={() => setAuthState('login')} />;
-
   return (
-    <div className="min-h-screen bg-[#fafafa] text-[#333] font-sans" dir="rtl">
+    <AnimatePresence mode="wait">
+      {authState === 'login' && (
+        <motion.div key="login" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
+          <LoginView onLogin={() => setAuthState('authenticated')} onNavigateRegister={() => setAuthState('register')} />
+        </motion.div>
+      )}
+      {authState === 'register' && (
+        <motion.div key="register" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }}>
+          <RegisterView onRegister={() => setAuthState('authenticated')} onNavigateLogin={() => setAuthState('login')} />
+        </motion.div>
+      )}
+      {authState === 'authenticated' && (
+        <motion.div key="app" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }} className="min-h-screen bg-[#fafafa] text-[#333] font-sans" dir="rtl">
       {/* Toast Notification */}
       <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-[9999] bg-[#1e293b] text-white px-6 py-3 rounded-xl shadow-lg transition-all duration-300 ${toast.visible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'}`}>
         <div className="flex items-center gap-2">
@@ -143,21 +153,28 @@ export default function App() {
 
         {/* Main Content Area */}
         <main className="flex-1 overflow-y-auto p-4 md:p-8 relative custom-scrollbar">
-          {activeTab === 'dashboard' && <DashboardView showToast={showToast} />}
-
-          {activeTab === 'analysis' && <AnalysisView showToast={showToast} />}
-
-          {activeTab === 'simulation' && <SimulationView showToast={showToast} />}
-
-          {activeTab === 'monitoring' && <MonitoringView showToast={showToast} />}
-
-          {activeTab === 'reports' && <ReportsView showToast={showToast} />}
-
-          {activeTab === 'help' && <HelpView showToast={showToast} />}
-
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+              className="h-full"
+            >
+              {activeTab === 'dashboard' && <DashboardView showToast={showToast} />}
+              {activeTab === 'analysis' && <AnalysisView showToast={showToast} />}
+              {activeTab === 'simulation' && <SimulationView showToast={showToast} />}
+              {activeTab === 'monitoring' && <MonitoringView showToast={showToast} />}
+              {activeTab === 'reports' && <ReportsView showToast={showToast} />}
+              {activeTab === 'help' && <HelpView showToast={showToast} />}
+            </motion.div>
+          </AnimatePresence>
         </main>
       </div>
-    </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 
@@ -465,9 +482,10 @@ function AirQualityCard() {
             <Tooltip
               contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', direction: 'rtl' }}
               labelStyle={{ display: 'none' }}
+              cursor={{ stroke: '#7bc341', strokeWidth: 1, strokeDasharray: '4 4', fill: 'transparent' }}
             />
-            <Area type="monotone" dataKey="pm25" stroke="#7bc341" strokeWidth={2} fillOpacity={1} fill="url(#colorPm25)" />
-            <Area type="monotone" dataKey="pm10" stroke="#1e293b" strokeWidth={2} fill="transparent" />
+            <Area activeDot={{ r: 6, fill: '#7bc341', stroke: '#fff', strokeWidth: 2 }} type="monotone" dataKey="pm25" stroke="#7bc341" strokeWidth={3} fillOpacity={1} fill="url(#colorPm25)" />
+            <Area activeDot={{ r: 5, fill: '#1e293b', stroke: '#fff', strokeWidth: 2 }} type="monotone" dataKey="pm10" stroke="#1e293b" strokeWidth={2} fill="transparent" strokeDasharray="5 5" />
           </AreaChart>
         </ResponsiveContainer>
       </div>
@@ -545,10 +563,10 @@ function CarbonFootprintCard() {
           <BarChart data={data} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
             <Tooltip
               contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', direction: 'rtl' }}
-              cursor={{ fill: '#f8fafc' }}
+              cursor={{ fill: 'rgba(123, 195, 65, 0.05)' }}
             />
             <Bar dataKey="current" fill="#f1f5f9" radius={[4, 4, 0, 0]} barSize={32} />
-            <Bar dataKey="target" fill="#7bc341" radius={[4, 4, 0, 0]} barSize={32} style={{ marginTop: '-100%' }} />
+            <Bar dataKey="target" fill="#7bc341" radius={[4, 4, 0, 0]} barSize={32} />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -710,7 +728,7 @@ function AssistantCard() {
   };
 
   return (
-    <div className="bg-gradient-to-br from-[#f6fbf6] to-[#fcfdfc] border-[1px] border-[#e1ece1] rounded-[24px] p-8 flex flex-col relative shadow-sm overflow-hidden mb-6 min-h-[400px]">
+    <div className="bg-gradient-to-br from-[#f6fbf6] to-[#fcfdfc] border-[1px] border-[#e1ece1] rounded-[24px] p-8 flex flex-col relative shadow-sm overflow-hidden mb-6 min-h-[550px]">
       <div className="absolute top-0 right-0 left-0 h-[150px] bg-gradient-to-b from-[#eaf5eb]/50 to-transparent pointer-events-none"></div>
 
       <div className="flex items-start gap-4 mb-8 z-10 w-full">
@@ -753,11 +771,13 @@ function AssistantCard() {
           </div>
         </div>
       ) : (
-        <div className="flex-1 w-full max-w-[1200px] z-10 flex flex-col gap-4 mb-6 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+        <div className="flex-1 w-full max-w-[1200px] z-10 flex flex-col gap-4 mb-6 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
           {messages.map((m, idx) => (
             <div key={idx} className={`flex w-full ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
               <div className={`p-4 rounded-2xl max-w-[80%] ${m.role === 'user' ? 'bg-[#7bc341] text-white rounded-tl-sm' : 'bg-white border border-gray-200 text-gray-800 rounded-tr-sm shadow-sm'}`}>
-                <p className="text-[14px] font-bold leading-relaxed whitespace-pre-wrap">{m.content}</p>
+                <div className="text-[14px] font-bold leading-relaxed whitespace-pre-wrap md-content">
+                  <ReactMarkdown>{m.content}</ReactMarkdown>
+                </div>
               </div>
             </div>
           ))}
@@ -1243,8 +1263,12 @@ function EnvironmentalChartPanel() {
       <div className="h-[250px] w-full mb-8 relative">
         <ResponsiveContainer width="100%" height="100%" dir="ltr" minWidth={0} minHeight={0}>
           <LineChart data={data}>
-            <Line type="monotone" dataKey="line1" stroke="#0ea5e9" strokeWidth={2} dot={{ r: 4, fill: '#fff', stroke: '#0ea5e9', strokeWidth: 2 }} activeDot={{ r: 6 }} />
-            <Line type="monotone" dataKey="line2" stroke="#1e293b" strokeWidth={2} dot={{ r: 4, fill: '#fff', stroke: '#1e293b', strokeWidth: 2 }} activeDot={{ r: 6 }} />
+            <Tooltip
+              contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', direction: 'rtl' }}
+              cursor={{ stroke: '#7bc341', strokeWidth: 1, strokeDasharray: '4 4' }}
+            />
+            <Line activeDot={{ r: 6, fill: '#7bc341', stroke: '#fff', strokeWidth: 2 }} type="monotone" dataKey="line1" stroke="#0ea5e9" strokeWidth={2} dot={{ r: 4, fill: '#fff', stroke: '#0ea5e9', strokeWidth: 2 }} />
+            <Line activeDot={{ r: 6, fill: '#1e293b', stroke: '#fff', strokeWidth: 2 }} type="monotone" dataKey="line2" stroke="#1e293b" strokeWidth={2} dot={{ r: 4, fill: '#fff', stroke: '#1e293b', strokeWidth: 2 }} />
           </LineChart>
         </ResponsiveContainer>
       </div>
@@ -1546,7 +1570,12 @@ function ChartPanel() {
                 <stop offset="95%" stopColor="#7bc341" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <Area type="monotone" dataKey="value" stroke="#7bc341" strokeWidth={4} fillOpacity={1} fill="url(#colorValueSim)" />
+            <Tooltip
+              contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', direction: 'rtl' }}
+              labelStyle={{ display: 'none' }}
+              cursor={{ stroke: '#7bc341', strokeWidth: 1, strokeDasharray: '4 4', fill: 'transparent' }}
+            />
+            <Area activeDot={{ r: 6, fill: '#7bc341', stroke: '#fff', strokeWidth: 2 }} type="monotone" dataKey="value" stroke="#7bc341" strokeWidth={4} fillOpacity={1} fill="url(#colorValueSim)" />
           </AreaChart>
         </ResponsiveContainer>
 
@@ -1879,6 +1908,9 @@ function LoginView({ onLogin, onNavigateRegister }: { onLogin: () => void, onNav
               </div>
               <button onClick={onNavigateRegister} className="w-full border border-gray-200 text-gray-700 font-bold py-3.5 rounded-lg hover:bg-gray-50 transition-all text-[15px]">
                 إنشاء حساب جديد
+              </button>
+              <button onClick={onLogin} className="w-full border-transparent text-[#7bc341] font-bold py-2 hover:underline transition-all text-[14px] mt-2 text-center">
+                متابعة كزائر
               </button>
             </div>
           </motion.div>
