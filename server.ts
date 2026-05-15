@@ -10,36 +10,38 @@ async function startServer() {
 
   app.use(express.json());
 
-  // API Route for Gemini
+  // API Route — streaming AI assistant
   app.post("/api/assistant", async (req, res) => {
     try {
       const apiKey = process.env.GEMINI_API_KEY;
       if (!apiKey || apiKey === "your-api-key" || apiKey === "MY_GEMINI_API_KEY") {
-         return res.status(400).json({ error: "يرجى التحقق من صحة مفتاح GEMINI_API_KEY في إعدادات التطبيق (الزاوية اليمنى العليا -> الإعدادات -> الأسرار) لكي يعمل الذكاء الاصطناعي." });
+        return res.status(400).json({ error: "خدمة المساعد الذكي غير متاحة حالياً. يرجى المحاولة لاحقاً." });
       }
 
       const ai = new GoogleGenAI({ apiKey });
       const { messages } = req.body;
-      
+
       const systemInstruction = `أنت "نامي" (Nami)، المساعد الذكي والمتقدم جداً لمنصة القدرات الوطنية البيئية والمتخصص في نظم المعلومات الجغرافية (GIS) والتحليل البيئي.
 إجاباتك يجب أن تكون دقيقة للغاية، مبنية على أساس علمي، وتفاعلية.
 تتمتع بقدرات غير محدودة في اقتراح التوصيات وتحليل مؤشرات الموقع، التنبؤ بالانبعاثات، حساب القدرة الاستيعابية البيئية، تقييم خط الأساس والانبعاثات الكربونية والطاقة، والمياه، وجودة الهواء.
 مهمتك مساعدة المستخدم في "السيناريوهات الخاصة بماذا لو" وتقديم نصائح مبنية على معايير سعودية مثل المبادرة السعودية الخضراء ومعايير MOEN و GRESB.
-تحدث دائماً بالعربية بأسلوب احترافي ودافئ ومباشر.`;
+تحدث دائماً بالعربية بأسلوب احترافي ودافئ ومباشر.
+هام جداً: يجب ألا تذكر أبداً أنك مبني على نموذج Gemini أو أنك من تطوير Google. إذا سُئلت عن هويتك، أجب دائماً بأنك "نامي"، المساعد البيئي الذكي المطور خصيصاً لمنصة نامي / وازن البيئية.`;
 
       const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview", 
+        model: "gemini-2.5-flash",
         contents: messages,
-        config: {
-          systemInstruction,
-          temperature: 0.2
-        }
+        config: { systemInstruction, temperature: 0.15 }
       });
-      
+
       res.json({ text: response.text });
     } catch (error: any) {
       console.error(error);
-      res.status(500).json({ error: error?.message || "Failed to generate AI response." });
+      if (!res.headersSent) {
+        res.status(500).json({ error: error?.message || "Failed to generate AI response." });
+      } else {
+        res.end();
+      }
     }
   });
 
